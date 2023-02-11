@@ -26,6 +26,7 @@ cleanup_flag = threading.Event()
 downloader_pool_lock = threading.Lock()
 downloader_pool = []
 
+subscribers = set([])
 
 @bot.message_handler(commands=['disk'])
 def disk_space(message):
@@ -40,15 +41,18 @@ def disk_space(message):
 
 
 # TODO: add help/start button
-# TODO: show list of downloaded movies button
+@bot.message_handler(commands=["start", "help"])
+def show_usage(message):
+    pass
+
+# TODO: convert to button
 @bot.message_handler(commands=["ls"])
 def print_current_movies(message):
     output = [os.path.basename(dir_name) for dir_name, _, _ in os.walk(MOVIES_FOLDER)]
     bot.reply_to(message, "\n".join(output))
 
+
 # TODO: convert to button
-
-
 @bot.message_handler(commands=['new'])
 def spawn_new(message):
     msg = bot.reply_to(message, "Hi there, please insert a magnet link")
@@ -67,21 +71,21 @@ def magent_link_handler(message):
 
     with downloader_pool_lock:
         downloader_pool.append(downloader_obj)
-
+    
+    subscribers.add(message.chat.id)
     bot.reply_to(message, "link has been added, starting download")
 
 # TODO: convert to button
-
-
 @bot.message_handler(commands=['status'])
 def status_all(message):
     with downloader_pool_lock:
+        if not downloader_pool:
+            bot.reply_to(message, "There are no torrent in download")
+        
         for downloader_obj in downloader_pool:
             bot.reply_to(message, downloader_obj)
-        else:
-            bot.reply_to(message, "There are no torrent in download")
 
-
+#TODO: add ping on compleation
 def garbage_collector_function():
     cleanup_flag.set()
     logging.info("garbage collenction is on")
@@ -92,9 +96,15 @@ def garbage_collector_function():
         logging.info("clean up is in session")
 
         with downloader_pool_lock:
+            downloader_pool_ready_to_delete = itertools.filterfalse(
+                lambda downloader_obj: not downloader_obj.is_seeding(), downloader_pool)
+            
+            for chat_id, downloader_obj in itertools.product(subscribers, downloader_pool_ready_to_delete):
+                bot.send_message(chat_id, f"{downloader_obj.get_name()} has finished")
+            
             downloader_pool[:] = itertools.filterfalse(
                 lambda downloader_obj: downloader_obj.is_seeding(), downloader_pool)
-
+                    
         logging.info("done cleaning up for now")
 
 
