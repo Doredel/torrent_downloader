@@ -33,4 +33,4 @@ class Downloader:
     
     def __repr__(self):
         current_status = self.get_status()
-        return f"{current_status.name()}: {current_status.progress * 100:.2f}% complete (down: {current_status.download_rate / 1000:.1f} kB/s up: {current_status.upload_rate / 1000:.1f} kB/s peers: {current_status.num_peers})"
+        return f"{current_status.name}: {current_status.progress * 100:.2f}% complete (down: {current_status.download_rate / 1000:.1f} kB/s up: {current_status.upload_rate / 1000:.1f} kB/s peers: {current_status.num_peers})"

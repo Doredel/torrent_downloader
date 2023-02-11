@@ -3,6 +3,7 @@ import logging
 import shutil
 import threading
 import time
+import os
 
 import hurry.filesize
 import telebot
@@ -29,7 +30,7 @@ downloader_pool = []
 @bot.message_handler(commands=['disk'])
 def disk_space(message):
     disk_usage = shutil.disk_usage("/mnt/external")
-    
+
     format_usage = f"""
     Total\tUsed\tFree
     {hurry.filesize.size(disk_usage.total)}\t{hurry.filesize.size(disk_usage.used)}\t{hurry.filesize.size(disk_usage.free)}
@@ -40,8 +41,14 @@ def disk_space(message):
 
 # TODO: add help/start button
 # TODO: show list of downloaded movies button
+@bot.message_handler(commands=["ls"])
+def print_current_movies(message):
+    output = [os.path.basename(dir_name) for dir_name, _, _ in os.walk(MOVIES_FOLDER)]
+    bot.reply_to(message, "\n".join(output))
 
 # TODO: convert to button
+
+
 @bot.message_handler(commands=['new'])
 def spawn_new(message):
     msg = bot.reply_to(message, "Hi there, please insert a magnet link")
@@ -64,6 +71,8 @@ def magent_link_handler(message):
     bot.reply_to(message, "link has been added, starting download")
 
 # TODO: convert to button
+
+
 @bot.message_handler(commands=['status'])
 def status_all(message):
     with downloader_pool_lock:
@@ -76,7 +85,7 @@ def status_all(message):
 def garbage_collector_function():
     cleanup_flag.set()
     logging.info("garbage collenction is on")
-    
+
     while cleanup_flag.is_set():
         logging.info("entering sleep")
         time.sleep(CLEANUP_TIMEOUT)
@@ -84,7 +93,7 @@ def garbage_collector_function():
 
         with downloader_pool_lock:
             downloader_pool[:] = itertools.filterfalse(
-                lambda downloader_obj: not downloader_obj.is_seeding(), downloader_pool)
+                lambda downloader_obj: downloader_obj.is_seeding(), downloader_pool)
 
         logging.info("done cleaning up for now")
 
@@ -96,11 +105,11 @@ def init():
     garbage_collector = threading.Thread(target=garbage_collector_function)
 
     # TODO: keep links that are mid download in tmp_file, for continue downloading after power off
-    
+
     garbage_collector.start()
     bot.infinity_polling()
 
-    #bot is shuting down let it finish cleaning before shut down
+    # bot is shuting down let it finish cleaning before shut down
     cleanup_flag.clear()
     garbage_collector.join()
 
