@@ -5,7 +5,6 @@ import threading
 import time
 import os
 
-import hurry.filesize
 import telebot
 
 import magnet_downloader
@@ -34,8 +33,9 @@ def disk_space(message):
 
     format_usage = f"""
     Total\tUsed\tFree
-    {hurry.filesize.size(disk_usage.total)}\t{hurry.filesize.size(disk_usage.used)}\t{hurry.filesize.size(disk_usage.free)}
     """
+#    {hurry.filesize.size(disk_usage.total)}\t{hurry.filesize.size(disk_usage.used)}\t{hurry.filesize.size(disk_usage.free)}
+
 
     bot.reply_to(message, format_usage)
 
