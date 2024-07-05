@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "torrent_downloader"
+version = "1.0.0"
+description = "torrent client in python"
+authors = ["Dor Edelstein"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+libtorrent = "^2.0.9"
+typer = "^0.12.3"
+telebot = "^0.0.5"
+hurry = "^1.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
