@@ -10,6 +10,7 @@ libtorrent = "^2.0.9"
 typer = "^0.12.3"
 telebot = "^0.0.5"
 hurry = "^1.1"
+tqdm = "^4.66.4"
 
 [tool.poetry.dev-dependencies]
 

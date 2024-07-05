@@ -9,14 +9,13 @@ import telebot
 
 import magnet_downloader
 
+import constants
+
 BOT_TOKEN = open("telegram_token.txt", 'r').read()
-MOVIES_FOLDER = '/mnt/external/movies'
 
-# time in seconds
-CLEANUP_TIMEOUT = 60
-
-# TODO: give support to more then 1 port
-PORT = 6881
+logger = logging.getLogger("torrent_downloader_telegram_bot")
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.INFO)
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -48,7 +47,7 @@ def show_usage(message):
 # TODO: convert to button
 @bot.message_handler(commands=["ls"])
 def print_current_movies(message):
-    output = [os.path.basename(dir_name) for dir_name, _, _ in os.walk(MOVIES_FOLDER)]
+    output = [os.path.basename(dir_name) for dir_name, _, _ in os.walk(constants.MOVIES_FOLDER)]
     bot.reply_to(message, "\n".join(output))
 
 
@@ -62,8 +61,7 @@ def spawn_new(message):
 def magent_link_handler(message):
     # TODO: there must be a better way to write this function
     try:
-        downloader_obj = magnet_downloader.MagnetDownloader(
-            message.text, MOVIES_FOLDER, PORT)
+        downloader_obj = magnet_downloader.MagnetDownloader(message.text, constants.MOVIES_FOLDER, constants.PORT)
     except:
         bot.reply_to(
             message, "something went wrong, are you sure this is a magnet?")
@@ -88,12 +86,12 @@ def status_all(message):
 #TODO: add ping on compleation
 def garbage_collector_function():
     cleanup_flag.set()
-    logging.info("garbage collenction is on")
+    logger.info("garbage collenction is on")
 
     while cleanup_flag.is_set():
-        logging.info("entering sleep")
-        time.sleep(CLEANUP_TIMEOUT)
-        logging.info("clean up is in session")
+        logger.info("entering sleep")
+        time.sleep(constants.CLEANUP_TIMEOUT)
+        logger.info("clean up is in session")
 
         with downloader_pool_lock:
             downloader_pool_ready_to_delete = itertools.filterfalse(
@@ -105,11 +103,11 @@ def garbage_collector_function():
             downloader_pool[:] = itertools.filterfalse(
                 lambda downloader_obj: downloader_obj.is_seeding(), downloader_pool)
                     
-        logging.info("done cleaning up for now")
+        logger.info("done cleaning up for now")
 
 
 def init():
-    logging.getLogger().setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
 
     # This would keep the ram clean (hopfully)
     garbage_collector = threading.Thread(target=garbage_collector_function)

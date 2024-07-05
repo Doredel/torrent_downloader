@@ -1,6 +1,5 @@
 import libtorrent
-
-LISTEN_INTERFACE = "0.0.0.0"
+import constants
 
 
 class Downloader:
@@ -10,9 +9,7 @@ class Downloader:
 
     def __init__(self, torrent_src_path, save_path, port):
 
-        self._session = libtorrent.session(
-            {'listen_interfaces': f'{LISTEN_INTERFACE}:{port}'}
-            )
+        self._session = libtorrent.session({'listen_interfaces': f'{constants.LISTEN_INTERFACE}:{port}'})
 
         torrent_params = self.initiate_torrent_params(torrent_src_path)
         torrent_params.save_path = save_path
